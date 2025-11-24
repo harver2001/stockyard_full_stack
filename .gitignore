@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.env/
+.envrc
+
+# Secret and environment files
+*.env
+*.env.*
+backend/auth_service/.env
+backend/stock_service/.env
+
+# SQLite database files
+*.db
+*.sqlite3
+
+# Docker
+*.log
+docker-compose.override.yml
+
+# Node.js (for frontend)
+node_modules/
+build/
+dist/
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Misc
+*.bak
+*.swp
