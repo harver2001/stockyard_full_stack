@@ -16,6 +16,10 @@ RUN pip install --no-cache-dir -r backend/requirements.txt -r backend/auth_servi
 # Copy the backend application code
 COPY backend/ ./backend/
 
+# Copy environment files
+COPY backend/auth_service/.env ./backend/auth_service/.env
+COPY backend/stock_service/.env ./backend/stock_service/.env
+
 # Copy the start script
 COPY start.sh ./start.sh
 RUN chmod +x start.sh
