@@ -6,8 +6,7 @@ import os
 stock_bp = Blueprint('stock', __name__)
 
 # Initialize Finnhub client
-finnhub_client = finnhub.Client(api_key='d4htt2hr01quqmlal5lgd4htt2hr01quqmlal5m0')
-print(os.environ.get('FINNHUB_API_KEY'))
+finnhub_client = finnhub.Client(api_key=os.environ.get('FINNHUB_API_KEY'))
 
 @stock_bp.route('/quote/<symbol>', methods=['GET'])
 def get_quote(symbol):
