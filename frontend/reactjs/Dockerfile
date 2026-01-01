@@ -4,23 +4,17 @@ FROM node:18-alpine
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json
-COPY stock-auth-tester/ ./
+# Copy package.json and package-lock.json first for better caching
+COPY stock-auth-tester/package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Build the React app
-RUN npm run build
+# Copy the rest of the application code
+COPY stock-auth-tester/ ./
 
-# Use an Nginx image to serve the React app
-FROM nginx:alpine
+# Expose port 3000
+EXPOSE 3000
 
-# Copy the build output to Nginx's default directory
-COPY --from=0 /app/build /usr/share/nginx/html
-
-# Expose port 80
-EXPOSE 80
-
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start the React app in development mode
+CMD ["npm", "start"]

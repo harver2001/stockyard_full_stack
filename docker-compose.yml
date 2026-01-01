@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+      - "5002:5002"
+    volumes:
+      - ./backend:/app/backend
+      - ./start.sh:/app/start.sh
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+    command: ./start.sh
+
+  frontend:
+    build: ./frontend/reactjs
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/reactjs/stock-auth-tester:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_API_URL=http://localhost:5001
+      - REACT_APP_STOCK_URL=http://localhost:5002
+    command: npm start

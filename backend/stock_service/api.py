@@ -6,10 +6,12 @@ import os
 stock_bp = Blueprint('stock', __name__)
 
 # Initialize Finnhub client
-finnhub_client = finnhub.Client(api_key=os.environ.get('FINNHUB_API_KEY'))
+finnhub_client = finnhub.Client(api_key='d4htt2hr01quqmlal5lgd4htt2hr01quqmlal5m0')
+print(os.environ.get('FINNHUB_API_KEY'))
 
 @stock_bp.route('/quote/<symbol>', methods=['GET'])
 def get_quote(symbol):
+    print("Test log!")
     auth_header = request.headers.get('Authorization')
     if not auth_header or not auth_header.startswith('Bearer '):
         return jsonify({'error': 'Missing or invalid token'}), 401
