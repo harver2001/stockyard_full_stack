@@ -51,3 +51,22 @@ def get_company(symbol):
         return jsonify(profile), 200
     except Exception as e:
         return jsonify({'error': f'Failed to fetch company data: {str(e)}'}), 500
+
+@stock_bp.route('/search/<symbol>', methods=['GET'])
+def search_stock(symbol):
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({'error': 'Missing or invalid token'}), 401
+
+    token = auth_header.split(' ')[1]
+    payload = verify_token(token)
+    if not payload:
+        return jsonify({'error': 'Invalid or expired token'}), 401
+    if symbol is None:
+        return jsonify({'error': 'Missing symbol parameter'}), 400
+    try:
+        result = finnhub_client.symbol_lookup(symbol)
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to fetch company data: {str(e)}'}), 500
+    

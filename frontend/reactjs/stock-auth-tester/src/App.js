@@ -29,7 +29,8 @@ function App() {
   const [loginForm, setLoginForm] = useState({ username_or_email: '', password: '' });
   const [registerForm, setRegisterForm] = useState({ username: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
+  const [searchQuote, setSearchQuote] = useState('');
 
   const API_BASE_AUTH = process.env.REACT_APP_API_URL || 'http://localhost:5001';
   const API_BASE_STOCK = process.env.REACT_APP_STOCK_URL || 'http://localhost:5002';
@@ -143,190 +144,198 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <div className="App">
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            ShareTracker
+        <AppBar position="static">
+          <Toolbar>
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+              ShareTracker
+            </Typography>
+            <Button
+              color="inherit"
+              startIcon={<PersonAdd />}
+              onClick={() => setRegisterOpen(true)}
+            >
+              Register
+            </Button>
+            <Button
+              color="inherit"
+              startIcon={<Login />}
+              onClick={() => setLoginOpen(true)}
+            >
+              Login
+            </Button>
+            <IconButton color="inherit" onClick={() => setDarkMode(!darkMode)}>
+              {darkMode ? <Brightness7 /> : <Brightness4 />}
+            </IconButton>
+          </Toolbar>
+        </AppBar>
+
+        <Container maxWidth="md" sx={{ mt: 4 }}>
+          <Typography variant="h4" component="h1" gutterBottom align="center">
+            Stock Data Dashboard
           </Typography>
-          <Button
-            color="inherit"
-            startIcon={<PersonAdd />}
-            onClick={() => setRegisterOpen(true)}
-          >
-            Register
-          </Button>
-          <Button
-            color="inherit"
-            startIcon={<Login />}
-            onClick={() => setLoginOpen(true)}
-          >
-            Login
-          </Button>
-          <IconButton color="inherit" onClick={() => setDarkMode(!darkMode)}>
-            {darkMode ? <Brightness7 /> : <Brightness4 />}
-          </IconButton>
-        </Toolbar>
-      </AppBar>
 
-      <Container maxWidth="md" sx={{ mt: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center">
-          Stock Data Dashboard
-        </Typography>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Stock Actions
+                  </Typography>
+                  <Button 
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    sx={{ mb: 2 }}
+                    onClick={getStockQuote}
+                    disabled={!token}
+                  >Search Stock Quote</Button>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    sx={{ mb: 2 }}
+                    onClick={getStockQuote}
+                    disabled={!token}
+                  >
+                    Get AAPL Quote
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    fullWidth
+                    onClick={getCompanyProfile}
+                    disabled={!token}
+                  >
+                    Get AAPL Company Profile
+                  </Button>
+                  {!token && (
+                    <Alert severity="info" sx={{ mt: 2 }}>
+                      Please login to access stock data
+                    </Alert>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
 
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Stock Actions
-                </Typography>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  fullWidth
-                  sx={{ mb: 2 }}
-                  onClick={getStockQuote}
-                  disabled={!token}
-                >
-                  Get AAPL Quote
-                </Button>
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  fullWidth
-                  onClick={getCompanyProfile}
-                  disabled={!token}
-                >
-                  Get AAPL Company Profile
-                </Button>
-                {!token && (
-                  <Alert severity="info" sx={{ mt: 2 }}>
-                    Please login to access stock data
-                  </Alert>
-                )}
-              </CardContent>
-            </Card>
+            <Grid item xs={12} md={6}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Response
+                  </Typography>
+                  {stockResponse && (
+                    <Paper sx={{ p: 2, mt: 2, maxHeight: 300, overflow: 'auto' }}>
+                      <pre style={{ margin: 0, fontSize: '0.8rem' }}>
+                        {JSON.stringify(stockResponse, null, 2)}
+                      </pre>
+                    </Paper>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
           </Grid>
-
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Response
-                </Typography>
-                {stockResponse && (
-                  <Paper sx={{ p: 2, mt: 2, maxHeight: 300, overflow: 'auto' }}>
-                    <pre style={{ margin: 0, fontSize: '0.8rem' }}>
-                      {JSON.stringify(stockResponse, null, 2)}
-                    </pre>
-                  </Paper>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      </Container>
-
-      {/* Login Modal */}
-      <Modal
-        open={loginOpen}
-        onClose={() => setLoginOpen(false)}
-        aria-labelledby="login-modal-title"
-      >
-        <Box sx={modalStyle}>
-          <Typography id="login-modal-title" variant="h6" component="h2" gutterBottom>
-            Login
-          </Typography>
-          <form onSubmit={handleLoginSubmit}>
-            <TextField
-              fullWidth
-              label="Username or Email"
-              value={loginForm.username_or_email}
-              onChange={(e) => setLoginForm({ ...loginForm, username_or_email: e.target.value })}
-              margin="normal"
-              required
-            />
-            <TextField
-              fullWidth
-              label="Password"
-              type="password"
-              value={loginForm.password}
-              onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-              margin="normal"
-              required
-            />
-            <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-              <Button type="submit" variant="contained" fullWidth disabled={loading}>
-                {loading ? 'Logging in...' : 'Login'}
-              </Button>
-              <Button variant="outlined" fullWidth onClick={() => setLoginOpen(false)}>
-                Cancel
-              </Button>
-            </Box>
-          </form>
-        </Box>
-      </Modal>
-
-      {/* Register Modal */}
-      <Modal
-        open={registerOpen}
-        onClose={() => setRegisterOpen(false)}
-        aria-labelledby="register-modal-title"
-      >
-        <Box sx={modalStyle}>
-          <Typography id="register-modal-title" variant="h6" component="h2" gutterBottom>
-            Register
-          </Typography>
-          <form onSubmit={handleRegisterSubmit}>
-            <TextField
-              fullWidth
-              label="Username"
-              value={registerForm.username}
-              onChange={(e) => setRegisterForm({ ...registerForm, username: e.target.value })}
-              margin="normal"
-              required
-            />
-            <TextField
-              fullWidth
-              label="Email"
-              type="email"
-              value={registerForm.email}
-              onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
-              margin="normal"
-              required
-            />
-            <TextField
-              fullWidth
-              label="Password"
-              type="password"
-              value={registerForm.password}
-              onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
-              margin="normal"
-              required
-            />
-            <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-              <Button type="submit" variant="contained" fullWidth disabled={loading}>
-                {loading ? 'Registering...' : 'Register'}
-              </Button>
-              <Button variant="outlined" fullWidth onClick={() => setRegisterOpen(false)}>
-                Cancel
-              </Button>
-            </Box>
-          </form>
-        </Box>
-      </Modal>
-
-      {/* Auth Response Alert */}
-      {authResponse && (
-        <Container maxWidth="md" sx={{ mt: 2 }}>
-          <Alert severity={authResponse.error ? 'error' : 'success'}>
-            <pre style={{ margin: 0, fontSize: '0.8rem' }}>
-              {JSON.stringify(authResponse, null, 2)}
-            </pre>
-          </Alert>
         </Container>
-      )}
-    </div>
+
+        {/* Login Modal */}
+        <Modal
+          open={loginOpen}
+          onClose={() => setLoginOpen(false)}
+          aria-labelledby="login-modal-title"
+        >
+          <Box sx={modalStyle}>
+            <Typography id="login-modal-title" variant="h6" component="h2" gutterBottom>
+              Login
+            </Typography>
+            <form onSubmit={handleLoginSubmit}>
+              <TextField
+                fullWidth
+                label="Username or Email"
+                value={loginForm.username_or_email}
+                onChange={(e) => setLoginForm({ ...loginForm, username_or_email: e.target.value })}
+                margin="normal"
+                required
+              />
+              <TextField
+                fullWidth
+                label="Password"
+                type="password"
+                value={loginForm.password}
+                onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                margin="normal"
+                required
+              />
+              <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+                <Button type="submit" variant="contained" fullWidth disabled={loading}>
+                  {loading ? 'Logging in...' : 'Login'}
+                </Button>
+                <Button variant="outlined" fullWidth onClick={() => setLoginOpen(false)}>
+                  Cancel
+                </Button>
+              </Box>
+            </form>
+          </Box>
+        </Modal>
+
+        {/* Register Modal */}
+        <Modal
+          open={registerOpen}
+          onClose={() => setRegisterOpen(false)}
+          aria-labelledby="register-modal-title"
+        >
+          <Box sx={modalStyle}>
+            <Typography id="register-modal-title" variant="h6" component="h2" gutterBottom>
+              Register
+            </Typography>
+            <form onSubmit={handleRegisterSubmit}>
+              <TextField
+                fullWidth
+                label="Username"
+                value={registerForm.username}
+                onChange={(e) => setRegisterForm({ ...registerForm, username: e.target.value })}
+                margin="normal"
+                required
+              />
+              <TextField
+                fullWidth
+                label="Email"
+                type="email"
+                value={registerForm.email}
+                onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
+                margin="normal"
+                required
+              />
+              <TextField
+                fullWidth
+                label="Password"
+                type="password"
+                value={registerForm.password}
+                onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
+                margin="normal"
+                required
+              />
+              <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+                <Button type="submit" variant="contained" fullWidth disabled={loading}>
+                  {loading ? 'Registering...' : 'Register'}
+                </Button>
+                <Button variant="outlined" fullWidth onClick={() => setRegisterOpen(false)}>
+                  Cancel
+                </Button>
+              </Box>
+            </form>
+          </Box>
+        </Modal>
+
+        {/* Auth Response Alert */}
+        {authResponse && (
+          <Container maxWidth="md" sx={{ mt: 2 }}>
+            <Alert severity={authResponse.error ? 'error' : 'success'}>
+              <pre style={{ margin: 0, fontSize: '0.8rem' }}>
+                {JSON.stringify(authResponse, null, 2)}
+              </pre>
+            </Alert>
+          </Container>
+        )}
+      </div>
     </ThemeProvider>
   );
 }
