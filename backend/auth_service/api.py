@@ -4,9 +4,16 @@ from .models import db, User, TokenBlacklist
 from .utils import hash_password, check_password, generate_token, verify_token
 import datetime
 
+import os
+
+redis_host = os.environ.get('REDIS_HOST', 'localhost')
+redis_port = os.environ.get('REDIS_PORT', 6379)
+redis_url = f"redis://{redis_host}:{redis_port}"
+
 auth_bp = Blueprint('auth', __name__)
 
-limiter = Limiter(key_func=lambda: request.remote_addr)
+limiter = Limiter(key_func=lambda: request.remote_addr, storage_uri=redis_url)
+
 
 @auth_bp.route('/register', methods=['POST'])
 @limiter.limit("5 per minute")

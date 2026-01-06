@@ -13,9 +13,18 @@ services:
     environment:
       - FLASK_ENV=development
       - FLASK_DEBUG=1
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     env_file:
       - .env
     command: ./start.sh
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
 
   frontend:
     build: ./frontend/reactjs
