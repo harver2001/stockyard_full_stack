@@ -121,9 +121,48 @@ def list_stocks():
     #     return jsonify({'error': 'Invalid or expired token'}), 401
 
     try:
-        symbols = finnhub_client.stock_symbols('IN')
+        symbols = finnhub_client.stock_symbols('US')
         logger.info(f"Successfully retrieved {len(symbols)} symbols")
+        r = redis_client.get_client()
+        if r:
+            try:
+                if r.get('symbols'):
+                    symbols = r.get('symbols')
+                else:
+                    r.setex('symbols', 60, json.dumps(symbols))
+                    logger.info(f"Successfully cached {len(symbols)} symbols")
+            except Exception as e:
+                logger.error(f"Error caching symbols: {str(e)}")
+                raise Exception(f"Error caching symbols: {str(e)}")
         return jsonify(symbols), 200
     except Exception as e:
         logger.error(f"Error listing stocks: {str(e)}")
         return jsonify({'error': f'Failed to fetch symbols: {str(e)}'}), 500
+
+@stock_bp.route('/search-list', methods=['GET'])
+def search_list():
+    query = request.args.get('q', '').upper()
+    
+    # Sample list for demonstration
+    sample_stocks = [
+        {'symbol': 'AAPL', 'name': 'Apple Inc.'},
+        {'symbol': 'MSFT', 'name': 'Microsoft Corporation'},
+        {'symbol': 'GOOGL', 'name': 'Alphabet Inc.'},
+        {'symbol': 'AMZN', 'name': 'Amazon.com Inc.'},
+        {'symbol': 'TSLA', 'name': 'Tesla Inc.'},
+        {'symbol': 'NVDA', 'name': 'NVIDIA Corporation'},
+        {'symbol': 'META', 'name': 'Meta Platforms Inc.'},
+        {'symbol': 'NFLX', 'name': 'Netflix Inc.'},
+        {'symbol': 'ADBE', 'name': 'Adobe Inc.'},
+        {'symbol': 'PYPL', 'name': 'PayPal Holdings Inc.'}
+    ]
+    
+    if not query:
+        return jsonify(sample_stocks), 200
+        
+    filtered_list = [
+        item for item in sample_stocks 
+        if query in item['symbol'] or query in item['name'].upper()
+    ]
+    
+    return jsonify(filtered_list), 200

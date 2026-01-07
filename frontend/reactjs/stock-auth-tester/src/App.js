@@ -16,6 +16,8 @@ import {
   IconButton
 } from '@mui/material';
 import { Login, PersonAdd, Brightness4, Brightness7 } from '@mui/icons-material';
+import AsyncSelect from 'react-select/async';
+
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import './App.css';
@@ -30,7 +32,9 @@ function App() {
   const [registerForm, setRegisterForm] = useState({ username: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
-  const [searchQuote, setSearchQuote] = useState('');
+  const [selectedStock, setSelectedStock] = useState(null);
+
+
 
   const API_BASE_AUTH = process.env.REACT_APP_API_URL || 'http://localhost:5001';
   const API_BASE_STOCK = process.env.REACT_APP_STOCK_URL || 'http://localhost:5002';
@@ -90,13 +94,13 @@ function App() {
     }
   };
 
-  const getStockQuote = async () => {
+  const getStockQuote = async (symbol = 'AAPL') => {
     if (!token) {
       setStockResponse({ error: 'Please login first' });
       return;
     }
     try {
-      const response = await fetch(`${API_BASE_STOCK}/api/v1/stock/quote/AAPL`, {
+      const response = await fetch(`${API_BASE_STOCK}/api/v1/stock/quote/${symbol}`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -108,6 +112,28 @@ function App() {
       setStockResponse({ error: 'Failed to connect to stock service' });
     }
   };
+
+  const loadStockOptions = async (inputValue) => {
+    try {
+      const response = await fetch(`${API_BASE_STOCK}/api/v1/stock/search-list?q=${inputValue}`);
+      const data = await response.json();
+      return data.map(item => ({
+        value: item.symbol,
+        label: `${item.symbol} - ${item.name}`
+      }));
+    } catch (error) {
+      console.error('Error fetching stock options:', error);
+      return [];
+    }
+  };
+
+  const handleStockSelect = (option) => {
+    setSelectedStock(option);
+    if (option) {
+      getStockQuote(option.value);
+    }
+  };
+
 
   const getCompanyProfile = async () => {
     if (!token) {
@@ -181,23 +207,57 @@ function App() {
                   <Typography variant="h6" gutterBottom>
                     Stock Actions
                   </Typography>
-                  <Button 
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    sx={{ mb: 2 }}
-                    onClick={getStockQuote}
-                    disabled={!token}
-                  >Search Stock Quote</Button>
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary' }}>
+                      Search and select a stock:
+                    </Typography>
+                    <AsyncSelect
+                      cacheOptions
+                      loadOptions={loadStockOptions}
+                      defaultOptions
+                      onChange={handleStockSelect}
+                      placeholder="Type to search (e.g. Apple, AAPL)..."
+                      styles={{
+                        control: (base) => ({
+                          ...base,
+                          backgroundColor: darkMode ? '#1e1e1e' : '#fff',
+                          borderColor: darkMode ? '#444' : '#ccc',
+                          color: darkMode ? '#fff' : '#000',
+                        }),
+                        menu: (base) => ({
+                          ...base,
+                          backgroundColor: darkMode ? '#1e1e1e' : '#fff',
+                        }),
+                        option: (base, state) => ({
+                          ...base,
+                          backgroundColor: state.isFocused
+                            ? (darkMode ? '#333' : '#eee')
+                            : (darkMode ? '#1e1e1e' : '#fff'),
+                          color: darkMode ? '#fff' : '#000',
+                          '&:active': {
+                            backgroundColor: darkMode ? '#444' : '#ddd',
+                          }
+                        }),
+                        singleValue: (base) => ({
+                          ...base,
+                          color: darkMode ? '#fff' : '#000',
+                        }),
+                        input: (base) => ({
+                          ...base,
+                          color: darkMode ? '#fff' : '#000',
+                        })
+                      }}
+                    />
+                  </Box>
                   <Button
                     variant="contained"
                     color="primary"
                     fullWidth
                     sx={{ mb: 2 }}
-                    onClick={getStockQuote}
+                    onClick={() => getStockQuote(selectedStock?.value || 'AAPL')}
                     disabled={!token}
                   >
-                    Get AAPL Quote
+                    Refresh {selectedStock?.value || 'AAPL'} Quote
                   </Button>
                   <Button
                     variant="contained"
@@ -208,6 +268,7 @@ function App() {
                   >
                     Get AAPL Company Profile
                   </Button>
+
                   {!token && (
                     <Alert severity="info" sx={{ mt: 2 }}>
                       Please login to access stock data
