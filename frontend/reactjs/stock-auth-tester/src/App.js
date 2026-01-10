@@ -6,6 +6,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Navbar from './components/Navbar';
 import { LoginModal, RegisterModal } from './components/AuthModals';
 import StockDashboard from './components/StockDashboard';
+import Logout from './components/Logout';
 import { login, register, fetchStockQuote, fetchCompanyProfile } from './services/api';
 
 import './App.css';
@@ -39,6 +40,7 @@ function App() {
         setToken(data.access_token);
         setLoginOpen(false);
         setLoginForm({ username_or_email: '', password: '' });
+        setAuthResponse(null); // Clear success message once logged in
       }
     } catch (error) {
       setAuthResponse({ error: 'Failed to connect to auth service' });
@@ -91,6 +93,14 @@ function App() {
     }
   };
 
+  const logoutUser = () => {
+    localStorage.removeItem('access_token');
+    setToken('');
+    setAuthResponse(null);
+    setSelectedStock(null);
+    setStockResponse(null);
+  }
+
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     if (token) {
@@ -107,6 +117,8 @@ function App() {
           onLoginOpen={() => setLoginOpen(true)}
           darkMode={darkMode}
           onToggleDarkMode={() => setDarkMode(!darkMode)}
+          token={token}
+          onLogout={logoutUser}
         />
 
         <Container maxWidth="md" sx={{ mt: 4 }}>
@@ -123,27 +135,31 @@ function App() {
             onGetProfile={handleGetCompanyProfile}
             stockResponse={stockResponse}
           />
+
+          {token && <Logout onLogout={logoutUser} />}
         </Container>
 
-        <LoginModal
+        {!token && <LoginModal
           open={loginOpen}
           onClose={() => setLoginOpen(false)}
           form={loginForm}
           setForm={setLoginForm}
           onSubmit={handleLoginSubmit}
           loading={loading}
-        />
+          token={token}
+          logoutUser={logoutUser}
+        />}
 
-        <RegisterModal
+        {!token && <RegisterModal
           open={registerOpen}
           onClose={() => setRegisterOpen(false)}
           form={registerForm}
           setForm={setRegisterForm}
           onSubmit={handleRegisterSubmit}
           loading={loading}
-        />
+        />}
 
-        {authResponse && (
+        {authResponse && (!token || authResponse.error || authResponse.detail) && (
           <Container maxWidth="md" sx={{ mt: 2 }}>
             <Alert severity={(authResponse.error || authResponse.detail) ? 'error' : 'success'}>
               <pre style={{ margin: 0, fontSize: '0.8rem' }}>
