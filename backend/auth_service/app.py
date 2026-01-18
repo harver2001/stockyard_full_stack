@@ -3,17 +3,18 @@ from flask_limiter import Limiter
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
-from .models import db
+from .models import db, migrate
 from .api import auth_bp, limiter
 
 # Load environment variables from .env file
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:3000"], supports_credentials=True)
+CORS(app, origins=["*"], supports_credentials=True)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///auth.db')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'secret-key')
 db.init_app(app)
+migrate.init_app(app, db)
 limiter.init_app(app)
 
 app.register_blueprint(auth_bp, url_prefix='/api/v1/auth')
