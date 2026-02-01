@@ -48,6 +48,6 @@ export const searchStocks = async (inputValue) => {
     const data = await response.json();
     return data.map(item => ({
         value: item.symbol,
-        label: `${item.symbol} - ${item.name}`
+        label: `${item.symbol} - ${item.description}`
     }));
 };

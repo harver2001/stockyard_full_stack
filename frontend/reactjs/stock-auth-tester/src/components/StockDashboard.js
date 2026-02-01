@@ -2,6 +2,7 @@ import React from 'react';
 import { Grid, Card, CardContent, Typography, Box, Button, Alert, Paper } from '@mui/material';
 import AsyncSelect from 'react-select/async';
 import { searchStocks } from '../services/api';
+import StockResponseFormatter from './StockResponseFormatter';
 
 const StockDashboard = ({
     darkMode,
@@ -98,11 +99,7 @@ const StockDashboard = ({
                             Response
                         </Typography>
                         {stockResponse && (
-                            <Paper sx={{ p: 2, mt: 2, maxHeight: 300, overflow: 'auto' }}>
-                                <pre style={{ margin: 0, fontSize: '0.8rem' }}>
-                                    {JSON.stringify(stockResponse, null, 2)}
-                                </pre>
-                            </Paper>
+                            <StockResponseFormatter responseData={stockResponse} />
                         )}
                     </CardContent>
                 </Card>
