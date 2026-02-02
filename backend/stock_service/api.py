@@ -1,7 +1,9 @@
 from flask import Blueprint, request, jsonify
 import finnhub
+import yfinance as yf
 from .utils import verify_token
 import os
+import time
 import logging
 from rapidfuzz import process, fuzz
 
@@ -133,6 +135,17 @@ def list_stocks():
 
 @stock_bp.route('/search-list', methods=['GET'])
 def search_list():
+    if request.method != 'GET':
+        return jsonify({'error': 'Method not allowed'}), 405
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({'error': 'Missing or invalid token'}), 401
+    
+    token = auth_header.split(' ')[1]
+    payload = verify_token(token)
+    if not payload:
+        return jsonify({'error': 'Invalid or expired token'}), 401
+    
     query = request.args.get('q', '').upper()
     if not query:
         return jsonify([]), 200
@@ -172,3 +185,49 @@ def search_list():
     
     # Return top 50 results to keep response size manageable
     return jsonify(filtered_list[:50]), 200
+
+@stock_bp.route('/stock-candles', methods=['GET'])
+def get_stock_candles():
+    # auth_header = request.headers.get('Authorization')
+    # if not auth_header or not auth_header.startswith('Bearer '):
+    #     return jsonify({'error': 'Missing or invalid token'}), 401
+    
+    # token = auth_header.split(' ')[1]
+    # payload = verify_token(token)
+    # if not payload:
+    #     return jsonify({'error': 'Invalid or expired token'}), 401
+    
+    symbol = request.args.get('symbol')
+    if not symbol:
+        return jsonify({'error': 'Missing symbol parameter'}), 400
+    
+    period = request.args.get('period', '1y')
+    interval = request.args.get('interval', '1d')
+    
+    try:
+        symbol = symbol.upper()
+        logger.info(f"Fetching candles for {symbol} with period={period} and interval={interval}")
+        
+        ticker = yf.Ticker(symbol)
+        hist = ticker.history(period=period, interval=interval)
+        
+        if hist.empty:
+            return jsonify({'error': 'No data found for this symbol'}), 404
+            
+        # Convert index (Dates) to unix timestamps in seconds
+        timestamps = [int(t.timestamp()) for t in hist.index]
+        
+        data = {
+            't': timestamps,
+            'o': hist['Open'].tolist(),
+            'h': hist['High'].tolist(),
+            'l': hist['Low'].tolist(),
+            'c': hist['Close'].tolist(),
+            'v': hist['Volume'].tolist(),
+            's': 'ok'
+        }
+        
+        return jsonify(data), 200
+    except Exception as e:
+        logger.error(f"Error fetching candles for {symbol}: {e}")
+        return jsonify({'error': f'Failed to fetch candles: {str(e)}'}), 500

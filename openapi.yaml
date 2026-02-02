@@ -104,3 +104,38 @@ paths:
           description: Missing or invalid token
         '500':
           description: Failed to fetch company profile
+  /stock-candles:
+    get:
+      summary: Get stock candles (historical data)
+      description: Fetches historical OHLC (Open, High, Low, Close) data for a given symbol using yfinance.
+      tags:
+        - Stock
+      parameters:
+        - name: symbol
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            default: 1y
+        - name: interval
+          in: query
+          required: false
+          schema:
+            type: string
+            default: 1d
+      responses:
+        '200':
+          description: Historical stock data
+        '400':
+          description: Missing symbol parameter
+        '401':
+          description: Missing or invalid token
+        '404':
+          description: No data found for this symbol
+        '500':
+          description: Failed to fetch candles
