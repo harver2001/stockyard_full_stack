@@ -3,6 +3,7 @@ import { Grid, Card, CardContent, Typography, Box, Button, Alert, Paper } from '
 import AsyncSelect from 'react-select/async';
 import { searchStocks } from '../services/api';
 import StockResponseFormatter from './StockResponseFormatter';
+import Chart from './Chart';
 
 const StockDashboard = ({
     darkMode,
@@ -11,14 +12,27 @@ const StockDashboard = ({
     onStockSelect,
     onGetQuote,
     onGetProfile,
-    stockResponse
+    stockResponse,
+    candleData
 }) => {
     return (
         <Grid container spacing={3}>
+            <Grid item xs={12}>
+                <Chart
+                    symbol={selectedStock?.value}
+                    candleData={candleData}
+                    darkMode={darkMode}
+                />
+            </Grid>
             <Grid item xs={12} md={6}>
-                <Card>
+                <Card sx={{
+                    height: '100%',
+                    background: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}>
                     <CardContent>
-                        <Typography variant="h6" gutterBottom>
+                        <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
                             Stock Actions
                         </Typography>
                         <Box sx={{ mb: 3 }}>
@@ -27,7 +41,7 @@ const StockDashboard = ({
                             </Typography>
                             <AsyncSelect
                                 cacheOptions
-                                loadOptions={searchStocks}
+                                loadOptions={(inputValue) => searchStocks(inputValue, token)}
                                 defaultOptions
                                 onChange={onStockSelect}
                                 placeholder="Type to search (e.g. Apple, AAPL)..."
@@ -67,16 +81,17 @@ const StockDashboard = ({
                             variant="contained"
                             color="primary"
                             fullWidth
-                            sx={{ mb: 2 }}
+                            sx={{ mb: 2, borderRadius: 2 }}
                             onClick={() => onGetQuote(selectedStock?.value || 'AAPL')}
                             disabled={!token}
                         >
                             Refresh {selectedStock?.value || 'AAPL'} Quote
                         </Button>
                         <Button
-                            variant="contained"
+                            variant="outlined"
                             color="secondary"
                             fullWidth
+                            sx={{ borderRadius: 2 }}
                             onClick={() => onGetProfile(selectedStock?.value || 'AAPL')}
                             disabled={!token}
                         >
@@ -93,13 +108,23 @@ const StockDashboard = ({
             </Grid>
 
             <Grid item xs={12} md={6}>
-                <Card>
+                <Card sx={{
+                    height: '100%',
+                    background: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}>
                     <CardContent>
-                        <Typography variant="h6" gutterBottom>
-                            Response
+                        <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                            Data Response
                         </Typography>
                         {stockResponse && (
                             <StockResponseFormatter responseData={stockResponse} />
+                        )}
+                        {!stockResponse && (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
+                                <Typography color="textSecondary">No data fetched yet</Typography>
+                            </Box>
                         )}
                     </CardContent>
                 </Card>
@@ -109,3 +134,4 @@ const StockDashboard = ({
 };
 
 export default StockDashboard;
+

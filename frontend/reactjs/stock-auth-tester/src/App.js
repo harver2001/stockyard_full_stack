@@ -7,7 +7,7 @@ import Navbar from './components/Navbar';
 import { LoginModal, RegisterModal } from './components/AuthModals';
 import StockDashboard from './components/StockDashboard';
 import Logout from './components/Logout';
-import { login, register, fetchStockQuote, fetchCompanyProfile } from './services/api';
+import { login, register, fetchStockQuote, fetchCompanyProfile, fetchStockCandles } from './services/api';
 
 import './App.css';
 
@@ -22,6 +22,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [selectedStock, setSelectedStock] = useState(null);
+  const [candleData, setCandleData] = useState(null);
 
   const theme = createTheme({
     palette: {
@@ -86,10 +87,24 @@ function App() {
     }
   };
 
+  const handleGetStockCandles = async (symbol) => {
+    if (!token) return;
+    try {
+      const data = await fetchStockCandles(symbol, '1y', '1d', token);
+      setCandleData(data);
+    } catch (error) {
+      console.error('Failed to fetch candle data', error);
+    }
+  };
+
   const handleStockSelect = (option) => {
     setSelectedStock(option);
     if (option) {
       handleGetStockQuote(option.value);
+      handleGetStockCandles(option.value);
+    } else {
+      setCandleData(null);
+      setStockResponse(null);
     }
   };
 
@@ -134,6 +149,7 @@ function App() {
             onGetQuote={handleGetStockQuote}
             onGetProfile={handleGetCompanyProfile}
             stockResponse={stockResponse}
+            candleData={candleData}
           />
 
           {token && <Logout onLogout={logoutUser} />}

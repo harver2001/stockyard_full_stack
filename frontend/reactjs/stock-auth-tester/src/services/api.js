@@ -43,11 +43,26 @@ export const fetchCompanyProfile = async (symbol, token) => {
     return response.json();
 };
 
-export const searchStocks = async (inputValue) => {
-    const response = await fetch(`${API_BASE_STOCK}/api/v1/stock/search-list?q=${inputValue}`);
+export const searchStocks = async (inputValue, token) => {
+    const response = await fetch(`${API_BASE_STOCK}/api/v1/stock/search-list?q=${inputValue}`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
     const data = await response.json();
+    if (data.error) return [];
     return data.map(item => ({
         value: item.symbol,
         label: `${item.symbol} - ${item.description}`
     }));
+};
+
+export const fetchStockCandles = async (symbol, period = '1y', interval = '1d', token) => {
+    const response = await fetch(`${API_BASE_STOCK}/api/v1/stock/stock-candles?symbol=${symbol}&period=${period}&interval=${interval}`, {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    return response.json();
 };

@@ -188,14 +188,14 @@ def search_list():
 
 @stock_bp.route('/stock-candles', methods=['GET'])
 def get_stock_candles():
-    # auth_header = request.headers.get('Authorization')
-    # if not auth_header or not auth_header.startswith('Bearer '):
-    #     return jsonify({'error': 'Missing or invalid token'}), 401
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({'error': 'Missing or invalid token'}), 401
     
-    # token = auth_header.split(' ')[1]
-    # payload = verify_token(token)
-    # if not payload:
-    #     return jsonify({'error': 'Invalid or expired token'}), 401
+    token = auth_header.split(' ')[1]
+    payload = verify_token(token)
+    if not payload:
+        return jsonify({'error': 'Invalid or expired token'}), 401
     
     symbol = request.args.get('symbol')
     if not symbol:
