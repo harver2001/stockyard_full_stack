@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Container, Typography, Alert } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 import Navbar from './components/Navbar';
 import { LoginModal, RegisterModal } from './components/AuthModals';
 import StockDashboard from './components/StockDashboard';
 import Logout from './components/Logout';
+import PortfolioPage from './components/PortfolioPage';
 import { login, register, fetchStockQuote, fetchCompanyProfile, fetchStockCandles } from './services/api';
 
 import './App.css';
@@ -126,65 +128,72 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <div className="App">
-        <Navbar
-          onRegisterOpen={() => setRegisterOpen(true)}
-          onLoginOpen={() => setLoginOpen(true)}
-          darkMode={darkMode}
-          onToggleDarkMode={() => setDarkMode(!darkMode)}
-          token={token}
-          onLogout={logoutUser}
-        />
-
-        <Container maxWidth="md" sx={{ mt: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom align="center">
-            Stock Data Dashboard
-          </Typography>
-
-          <StockDashboard
+      <Router>
+        <div className="App">
+          <Navbar
+            onRegisterOpen={() => setRegisterOpen(true)}
+            onLoginOpen={() => setLoginOpen(true)}
             darkMode={darkMode}
+            onToggleDarkMode={() => setDarkMode(!darkMode)}
             token={token}
-            selectedStock={selectedStock}
-            onStockSelect={handleStockSelect}
-            onGetQuote={handleGetStockQuote}
-            onGetProfile={handleGetCompanyProfile}
-            stockResponse={stockResponse}
-            candleData={candleData}
+            onLogout={logoutUser}
           />
 
-          {token && <Logout onLogout={logoutUser} />}
-        </Container>
+          <Routes>
+            <Route path="/" element={
+              <Container maxWidth="md" sx={{ mt: 4 }}>
+                <Typography variant="h4" component="h1" gutterBottom align="center">
+                  Stock Data Dashboard
+                </Typography>
 
-        {!token && <LoginModal
-          open={loginOpen}
-          onClose={() => setLoginOpen(false)}
-          form={loginForm}
-          setForm={setLoginForm}
-          onSubmit={handleLoginSubmit}
-          loading={loading}
-          token={token}
-          logoutUser={logoutUser}
-        />}
+                <StockDashboard
+                  darkMode={darkMode}
+                  token={token}
+                  selectedStock={selectedStock}
+                  onStockSelect={handleStockSelect}
+                  onGetQuote={handleGetStockQuote}
+                  onGetProfile={handleGetCompanyProfile}
+                  stockResponse={stockResponse}
+                  candleData={candleData}
+                />
 
-        {!token && <RegisterModal
-          open={registerOpen}
-          onClose={() => setRegisterOpen(false)}
-          form={registerForm}
-          setForm={setRegisterForm}
-          onSubmit={handleRegisterSubmit}
-          loading={loading}
-        />}
+                {token && <Logout onLogout={logoutUser} />}
+              </Container>
+            } />
+            <Route path="/portfolio" element={<PortfolioPage token={token} />} />
+          </Routes>
 
-        {authResponse && (!token || authResponse.error || authResponse.detail) && (
-          <Container maxWidth="md" sx={{ mt: 2 }}>
-            <Alert severity={(authResponse.error || authResponse.detail) ? 'error' : 'success'}>
-              <pre style={{ margin: 0, fontSize: '0.8rem' }}>
-                {JSON.stringify(authResponse, null, 2)}
-              </pre>
-            </Alert>
-          </Container>
-        )}
-      </div>
+          {!token && <LoginModal
+            open={loginOpen}
+            onClose={() => setLoginOpen(false)}
+            form={loginForm}
+            setForm={setLoginForm}
+            onSubmit={handleLoginSubmit}
+            loading={loading}
+            token={token}
+            logoutUser={logoutUser}
+          />}
+
+          {!token && <RegisterModal
+            open={registerOpen}
+            onClose={() => setRegisterOpen(false)}
+            form={registerForm}
+            setForm={setRegisterForm}
+            onSubmit={handleRegisterSubmit}
+            loading={loading}
+          />}
+
+          {authResponse && (!token || authResponse.error || authResponse.detail) && (
+            <Container maxWidth="md" sx={{ mt: 2 }}>
+              <Alert severity={(authResponse.error || authResponse.detail) ? 'error' : 'success'}>
+                <pre style={{ margin: 0, fontSize: '0.8rem' }}>
+                  {JSON.stringify(authResponse, null, 2)}
+                </pre>
+              </Alert>
+            </Container>
+          )}
+        </div>
+      </Router>
     </ThemeProvider>
   );
 }
