@@ -20,9 +20,9 @@ services:
     command: ./start.sh
     depends_on:
       - redis
-      - db
-  
-  db:
+      - pgdb
+
+  pgdb:
     image: postgres:15
     container_name: postgres_db
     environment:
@@ -34,11 +34,35 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-
   redis:
     image: redis:alpine
     ports:
       - "6379:6379"
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb_local
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+
+  portfolio_service:
+    build:
+      context: ./backend/portfolio_service
+      dockerfile: Dockerfile
+    ports:
+      - "5003:5003"
+    volumes:
+      - ./backend/portfolio_service:/app
+      - /app/node_modules
+    environment:
+      - PORT=5003
+      - MONGO_URI=mongodb://mongodb:27017/portfolio_db
+    env_file:
+      - .env
+    depends_on:
+      - mongodb
 
   frontend:
     build: ./frontend/reactjs
@@ -50,7 +74,9 @@ services:
     environment:
       - REACT_APP_API_URL=http://localhost:5001
       - REACT_APP_STOCK_URL=http://localhost:5002
+      - REACT_APP_PORTFOLIO_URL=http://localhost:5003
     command: npm start
 
 volumes:
   pgdata:
+  mongodata:
