@@ -17,6 +17,7 @@ stock_bp = Blueprint('stock', __name__)
 finnhub_client = finnhub.Client(api_key=os.environ.get('FINNHUB_API_KEY'))
 
 from .redis_client import redis_client
+from .rabbitmq_client import publisher
 import json
 
 @stock_bp.route('/quote/<symbol>', methods=['GET'])
@@ -231,3 +232,14 @@ def get_stock_candles():
     except Exception as e:
         logger.error(f"Error fetching candles for {symbol}: {e}")
         return jsonify({'error': f'Failed to fetch candles: {str(e)}'}), 500
+@stock_bp.route('/add-stock', methods=['POST'])
+def add_stock():
+    # Simple implementation to publish a message
+    data = request.json
+    if not data or 'symbol' not in data:
+        return jsonify({'error': 'Missing symbol'}), 400
+    
+    # In a real app, you might save to DB here too
+    publisher.publish_stock_added(data)
+    
+    return jsonify({'message': f"Stock {data['symbol']} add event published"}), 201

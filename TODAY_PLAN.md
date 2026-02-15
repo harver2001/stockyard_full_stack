@@ -1,4 +1,4 @@
-# ShareTracker: One-Day Implementation Plan (January 18, 2026)
+# StockYard: One-Day Implementation Plan (January 18, 2026)
 
 ## 🎯 Focus: Database Migration + Basic Portfolio Management
 **Goal**: Complete PostgreSQL migration and implement core portfolio tracking functionality. This builds directly on your existing auth/stock services and provides immediate value.

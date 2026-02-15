@@ -4,6 +4,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import apiRoutes from './api.js';
+import { startConsumer } from './rabbitmq_consumer.js';
 
 dotenv.config();
 
@@ -32,4 +33,6 @@ app.use('/api', apiRoutes);
 // Start Server
 app.listen(PORT, () => {
     console.log(`Portfolio Service listening on port ${PORT}`);
+    // Start RabbitMQ Consumer
+    startConsumer().catch(err => console.error("Error starting RabbitMQ consumer:", err));
 });
