@@ -166,7 +166,7 @@ const LandingPage = ({ onLoginOpen, onRegisterOpen }) => {
                                 Ready to take control?
                             </Typography>
                             <Typography variant="body1" sx={{ color: 'var(--text-muted)', mb: 4, maxWidth: '600px', mx: 'auto' }}>
-                                Join thousands of traders who use ShareTracker to navigate the markets. Free to start, powerful enough to scale.
+                                Use ShareTracker to navigate the markets. Free to start, powerful enough to scale.
                             </Typography>
                             <Button
                                 onClick={onRegisterOpen}

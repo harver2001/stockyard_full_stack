@@ -1,5 +1,6 @@
 const API_BASE_AUTH = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 const API_BASE_STOCK = process.env.REACT_APP_STOCK_URL || 'http://localhost:5002';
+const API_BASE_PORTFOLIO = process.env.REACT_APP_PORTFOLIO_URL || 'http://localhost:5003';
 
 export const login = async (loginForm) => {
     const response = await fetch(`${API_BASE_AUTH}/api/v1/auth/login`, {
@@ -59,6 +60,28 @@ export const searchStocks = async (inputValue, token) => {
 
 export const fetchStockCandles = async (symbol, period = '1y', interval = '1d', token) => {
     const response = await fetch(`${API_BASE_STOCK}/api/v1/stock/stock-candles?symbol=${symbol}&period=${period}&interval=${interval}`, {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    return response.json();
+};
+
+export const addToPortfolio = async (stockData, token) => {
+    const response = await fetch(`${API_BASE_STOCK}/api/v1/stock/add-stock`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(stockData),
+    });
+    return response.json();
+};
+
+export const fetchPortfolio = async (token) => {
+    const response = await fetch(`${API_BASE_PORTFOLIO}/api/portfolio`, {
         method: 'GET',
         headers: {
             Authorization: `Bearer ${token}`,

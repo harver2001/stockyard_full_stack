@@ -1,7 +1,7 @@
 import React from 'react';
 import { Grid, Card, CardContent, Typography, Box, Button, Alert } from '@mui/material';
 import AsyncSelect from 'react-select/async';
-import { RefreshCcw, Info, Search, TrendingUp } from 'lucide-react';
+import { RefreshCcw, Info, Search, TrendingUp, Plus } from 'lucide-react';
 import { searchStocks } from '../services/api';
 import StockResponseFormatter from './StockResponseFormatter';
 import Chart from './Chart';
@@ -13,8 +13,10 @@ const StockDashboard = ({
     onStockSelect,
     onGetQuote,
     onGetProfile,
+    onAddPortfolio,
     stockResponse,
-    candleData
+    candleData,
+    loading
 }) => {
     return (
         <Grid container spacing={4}>
@@ -100,6 +102,25 @@ const StockDashboard = ({
                             <Button
                                 variant="contained"
                                 className="btn-primary"
+                                fullWidth
+                                startIcon={<Plus size={18} />}
+                                onClick={() => onAddPortfolio(selectedStock?.value || 'AAPL')}
+                                disabled={!token || loading}
+                                sx={{
+                                    textTransform: 'none',
+                                    py: 1.5,
+                                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                    '&:hover': {
+                                        background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                                    }
+                                }}
+                            >
+                                Add {selectedStock?.value || 'AAPL'} to Portfolio
+                            </Button>
+
+                            <Button
+                                variant="outlined"
+                                className="btn-secondary"
                                 fullWidth
                                 startIcon={<RefreshCcw size={18} />}
                                 onClick={() => onGetQuote(selectedStock?.value || 'AAPL')}

@@ -10,7 +10,7 @@ import { LoginModal, RegisterModal } from './components/AuthModals';
 import StockDashboard from './components/StockDashboard';
 import PortfolioPage from './components/PortfolioPage';
 import LandingPage from './components/LandingPage';
-import { login, register, fetchStockQuote, fetchCompanyProfile, fetchStockCandles } from './services/api';
+import { login, register, fetchStockQuote, fetchCompanyProfile, fetchStockCandles, addToPortfolio } from './services/api';
 
 import './App.css';
 
@@ -156,6 +156,30 @@ function App() {
     }
   };
 
+  const handleAddToPortfolio = async (symbol) => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const decoded = jwtDecode(token);
+      // Assuming user_id is in the token
+      const data = await addToPortfolio({
+        symbol,
+        user_id: decoded.user_id || decoded.sub,
+        timestamp: new Date().toISOString()
+      }, token);
+
+      if (data.error) {
+        setAuthResponse({ error: data.error });
+      } else {
+        setAuthResponse({ detail: `Successfully added ${symbol} to portfolio!` });
+      }
+    } catch (error) {
+      setAuthResponse({ error: 'Failed to add stock to portfolio' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleStockSelect = (option) => {
     setSelectedStock(option);
     if (option) {
@@ -207,8 +231,10 @@ function App() {
                       onStockSelect={handleStockSelect}
                       onGetQuote={handleGetStockQuote}
                       onGetProfile={handleGetCompanyProfile}
+                      onAddPortfolio={handleAddToPortfolio}
                       stockResponse={stockResponse}
                       candleData={candleData}
+                      loading={loading}
                     />
                   </Container>
                 )

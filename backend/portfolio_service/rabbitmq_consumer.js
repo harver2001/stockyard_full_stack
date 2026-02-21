@@ -1,4 +1,5 @@
 import amqp from 'amqplib';
+import Portfolio from './schema.js';
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://user:password@rabbitmq:5672';
 const QUEUE_NAME = 'stock_events';
@@ -19,15 +20,65 @@ export const startConsumer = async () => {
 
             console.log(` [*] Portfolio service waiting for messages in ${QUEUE_NAME}. To exit press CTRL+C`);
 
-            channel.consume(QUEUE_NAME, (msg) => {
+            channel.consume(QUEUE_NAME, async (msg) => {
                 if (msg !== null) {
-                    const content = JSON.parse(msg.content.toString());
-                    console.log(` [x] Portfolio Service received:`, content);
+                    try {
+                        const content = JSON.parse(msg.content.toString());
+                        console.log(` [x] Portfolio Service received:`, content);
 
-                    // Here you would typically update the portfolio DB
-                    // For example: if (content.event === 'STOCK_ADDED') { ... }
+                        if (content.event === 'STOCK_ADDED') {
+                            const { symbol, user_id, userId } = content.data;
+                            const finalUserId = user_id || userId;
 
-                    channel.ack(msg);
+                            if (finalUserId && symbol) {
+                                const symbolUpper = symbol.toUpperCase();
+
+                                // First, try to update existing stock quantity
+                                const result = await Portfolio.findOneAndUpdate(
+                                    { userId: finalUserId.toString(), "stocks.symbol": symbolUpper },
+                                    { $inc: { "stocks.$.quantity": 1 } },
+                                    { new: true }
+                                );
+
+                                if (!result) {
+                                    // If not found, either the portfolio doesn't exist or the stock isn't in it
+                                    // Try to push to existing portfolio
+                                    const pushResult = await Portfolio.findOneAndUpdate(
+                                        { userId: finalUserId.toString() },
+                                        {
+                                            $push: {
+                                                stocks: {
+                                                    symbol: symbolUpper,
+                                                    quantity: 1,
+                                                    purchasePrice: 0
+                                                }
+                                            }
+                                        },
+                                        { new: true }
+                                    );
+
+                                    if (!pushResult) {
+                                        // Portfolio doesn't exist at all, create it
+                                        await Portfolio.create({
+                                            userId: finalUserId.toString(),
+                                            stocks: [{
+                                                symbol: symbolUpper,
+                                                quantity: 1,
+                                                purchasePrice: 0
+                                            }]
+                                        });
+                                    }
+                                }
+                                console.log(` [v] Portfolio updated for user ${finalUserId}: ${symbolUpper}`);
+                            }
+                        }
+
+                        channel.ack(msg);
+                    } catch (err) {
+                        console.error("Error processing message:", err);
+                        // In case of error, still ack to avoid infinite loop, or use nack with requeue: false
+                        channel.ack(msg);
+                    }
                 }
             });
 

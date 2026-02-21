@@ -15,7 +15,7 @@ const StockSchema = new mongoose.Schema({
     },
 })
 
-const potfolioSchema = new mongoose.Schema({
+const portfolioSchema = new mongoose.Schema({
     userId: {
         type: String,
         required: true,
@@ -26,4 +26,6 @@ const potfolioSchema = new mongoose.Schema({
     }
 })
 
-const Portfolio = mongoose.model('Potfolio', potfolioSchema)
+const Portfolio = mongoose.model('Portfolio', portfolioSchema)
+
+export default Portfolio;
