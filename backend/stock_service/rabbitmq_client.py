@@ -28,7 +28,9 @@ class RabbitMQPublisher:
         print("Could not connect to RabbitMQ after retries.")
 
     def publish_stock_added(self, stock_data):
-        if not self.channel or self.channel.is_closed:
+        # Ensure connection and channel are open before publishing
+        if not self.connection or self.connection.is_closed or not self.channel or self.channel.is_closed:
+            print("RabbitMQ connection closed or not initialized, reconnecting...")
             self._connect()
         
         if self.channel:
@@ -36,15 +38,32 @@ class RabbitMQPublisher:
                 'event': 'STOCK_ADDED',
                 'data': stock_data
             }
-            self.channel.basic_publish(
-                exchange='',
-                routing_key='stock_events',
-                body=json.dumps(message),
-                properties=pika.BasicProperties(
-                    delivery_mode=2,  # make message persistent
+            try:
+                self.channel.basic_publish(
+                    exchange='',
+                    routing_key='stock_events',
+                    body=json.dumps(message),
+                    properties=pika.BasicProperties(
+                        delivery_mode=2,  # make message persistent
+                    )
                 )
-            )
-            print(f" [x] Sent stock added event: {stock_data}")
+                print(f" [x] Sent stock added event: {stock_data}")
+            except (pika.exceptions.StreamLostError, pika.exceptions.AMQPConnectionError) as e:
+                print(f"Connection lost while publishing: {e}. Reconnecting...")
+                self._connect()
+                if self.channel:
+                    self.channel.basic_publish(
+                        exchange='',
+                        routing_key='stock_events',
+                        body=json.dumps(message),
+                        properties=pika.BasicProperties(
+                            delivery_mode=2,
+                        )
+                    )
+                    print(f" [x] Sent stock added event after reconnect: {stock_data}")
+            except Exception as e:
+                print(f"Failed to publish message: {e}")
+                raise e
 
 # Singleton instance
 publisher = RabbitMQPublisher()

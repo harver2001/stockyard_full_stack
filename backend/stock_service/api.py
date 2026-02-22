@@ -234,12 +234,26 @@ def get_stock_candles():
         return jsonify({'error': f'Failed to fetch candles: {str(e)}'}), 500
 @stock_bp.route('/add-stock', methods=['POST'])
 def add_stock():
-    # Simple implementation to publish a message
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({'error': 'Missing or invalid token'}), 401
+    
+    token = auth_header.split(' ')[1]
+    payload = verify_token(token)
+    if not payload:
+        return jsonify({'error': 'Invalid or expired token'}), 401
+
     data = request.json
     if not data or 'symbol' not in data:
         return jsonify({'error': 'Missing symbol'}), 400
     
-    # In a real app, you might save to DB here too
-    publisher.publish_stock_added(data)
+    # Ensure user_id is in the data being published
+    if 'user_id' not in data:
+        data['user_id'] = payload.get('user_id') or payload.get('sub')
     
-    return jsonify({'message': f"Stock {data['symbol']} add event published"}), 201
+    try:
+        publisher.publish_stock_added(data)
+        return jsonify({'message': f"Stock {data['symbol']} add event published"}), 201
+    except Exception as e:
+        logger.error(f"Failed to publish stock add event: {str(e)}")
+        return jsonify({'error': 'Failed to process stock addition'}), 500
