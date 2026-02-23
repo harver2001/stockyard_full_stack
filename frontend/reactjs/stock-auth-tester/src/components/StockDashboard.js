@@ -1,10 +1,10 @@
-import React from 'react';
-import { Grid, Card, CardContent, Typography, Box, Button, Alert } from '@mui/material';
+import { Grid, Card, CardContent, Typography, Box, Button, Alert, Modal, Paper, TextField, IconButton } from '@mui/material';
 import AsyncSelect from 'react-select/async';
-import { RefreshCcw, Info, Search, TrendingUp, Plus } from 'lucide-react';
+import { RefreshCcw, Info, Search, TrendingUp, Plus, X } from 'lucide-react';
 import { searchStocks } from '../services/api';
 import StockResponseFormatter from './StockResponseFormatter';
 import Chart from './Chart';
+import { useState } from 'react';
 
 const StockDashboard = ({
     darkMode,
@@ -18,6 +18,20 @@ const StockDashboard = ({
     candleData,
     loading
 }) => {
+    const [open, setOpen] = useState(false);
+    const [quantity, setQuantity] = useState(1);
+
+    const handleOpen = () => setOpen(true);
+    const handleClose = () => {
+        setOpen(false);
+        setQuantity(1);
+    };
+
+    const handleConfirmAdd = () => {
+        onAddPortfolio(selectedStock?.value || 'AAPL', quantity);
+        handleClose();
+    };
+
     return (
         <Grid container spacing={4}>
             {/* Chart Section */}
@@ -104,7 +118,7 @@ const StockDashboard = ({
                                 className="btn-primary"
                                 fullWidth
                                 startIcon={<Plus size={18} />}
-                                onClick={() => onAddPortfolio(selectedStock?.value || 'AAPL')}
+                                onClick={handleOpen}
                                 disabled={!token || loading}
                                 sx={{
                                     textTransform: 'none',
@@ -187,6 +201,81 @@ const StockDashboard = ({
                     </CardContent>
                 </Card>
             </Grid>
+
+            {/* Quantity Modal */}
+            <Modal
+                open={open}
+                onClose={handleClose}
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backdropFilter: 'blur(8px)',
+                }}
+            >
+                <Paper
+                    className="glass-card"
+                    sx={{
+                        p: 4,
+                        width: '400px',
+                        outline: 'none',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        position: 'relative'
+                    }}
+                >
+                    <IconButton
+                        onClick={handleClose}
+                        sx={{ position: 'absolute', right: 8, top: 8, color: 'text.secondary' }}
+                    >
+                        <X size={20} />
+                    </IconButton>
+
+                    <Typography variant="h5" fontWeight={800} gutterBottom sx={{ color: '#fff' }}>
+                        Add to Portfolio
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
+                        Specify the number of shares for <strong>{selectedStock?.value || 'AAPL'}</strong>
+                    </Typography>
+
+                    <TextField
+                        fullWidth
+                        type="number"
+                        label="Quantity"
+                        value={quantity}
+                        onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 0))}
+                        sx={{
+                            mb: 4,
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '12px',
+                                backgroundColor: 'rgba(15, 23, 42, 0.5)',
+                            }
+                        }}
+                    />
+
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Button
+                            fullWidth
+                            variant="outlined"
+                            onClick={handleClose}
+                            sx={{ borderRadius: '10px', textTransform: 'none' }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            fullWidth
+                            variant="contained"
+                            onClick={handleConfirmAdd}
+                            sx={{
+                                borderRadius: '10px',
+                                textTransform: 'none',
+                                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)'
+                            }}
+                        >
+                            Confirm
+                        </Button>
+                    </Box>
+                </Paper>
+            </Modal>
         </Grid>
     );
 };

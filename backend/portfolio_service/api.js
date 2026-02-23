@@ -15,7 +15,7 @@ const jwtTokenValidationMiddleware = (req, res, next) => {
     }
     const token = authHeader.split(' ')[1];
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.SECRET_KEY || process.env.JWT_KEY);
         req.user = decoded;
         next();
     }
@@ -24,7 +24,7 @@ const jwtTokenValidationMiddleware = (req, res, next) => {
     }
 }
 
-router.get('/portfolio', jwtTokenValidationMiddleware, (req, res) => {
+router.get('/portfolio', jwtTokenValidationMiddleware, async (req, res) => {
     try {
         const userId = req.user.user_id || req.user.sub || req.user.id;
         Portfolio.findOne({ userId: userId }).then((portfolio) => {

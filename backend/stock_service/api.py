@@ -232,6 +232,7 @@ def get_stock_candles():
     except Exception as e:
         logger.error(f"Error fetching candles for {symbol}: {e}")
         return jsonify({'error': f'Failed to fetch candles: {str(e)}'}), 500
+        
 @stock_bp.route('/add-stock', methods=['POST'])
 def add_stock():
     auth_header = request.headers.get('Authorization')

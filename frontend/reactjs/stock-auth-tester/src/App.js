@@ -156,7 +156,7 @@ function App() {
     }
   };
 
-  const handleAddToPortfolio = async (symbol) => {
+  const handleAddToPortfolio = async (symbol, quantity = 1) => {
     if (!token) return;
     setLoading(true);
     try {
@@ -164,6 +164,8 @@ function App() {
       // Assuming user_id is in the token
       const data = await addToPortfolio({
         symbol,
+        quantity: parseInt(quantity),
+        current_price: stockResponse.current_price,
         user_id: decoded.user_id || decoded.sub,
         timestamp: new Date().toISOString()
       }, token);
@@ -171,7 +173,7 @@ function App() {
       if (data.error) {
         setAuthResponse({ error: data.error });
       } else {
-        setAuthResponse({ detail: `Successfully added ${symbol} to portfolio!` });
+        setAuthResponse({ detail: `Successfully added ${quantity} share(s) of ${symbol} to portfolio!` });
       }
     } catch (error) {
       setAuthResponse({ error: 'Failed to add stock to portfolio' });

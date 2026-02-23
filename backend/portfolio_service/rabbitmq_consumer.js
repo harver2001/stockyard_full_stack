@@ -27,16 +27,21 @@ export const startConsumer = async () => {
                         console.log(` [x] Portfolio Service received:`, content);
 
                         if (content.event === 'STOCK_ADDED') {
-                            const { symbol, user_id, userId } = content.data;
+                            const { symbol, user_id, userId, quantity, price, current_price } = content.data;
                             const finalUserId = user_id || userId;
+                            const qty = parseInt(quantity) || 1;
+                            const purchasePrice = parseFloat(price || current_price) || 0;
 
                             if (finalUserId && symbol) {
                                 const symbolUpper = symbol.toUpperCase();
 
-                                // First, try to update existing stock quantity
+                                // First, try to update existing stock quantity and price
                                 const result = await Portfolio.findOneAndUpdate(
                                     { userId: finalUserId.toString(), "stocks.symbol": symbolUpper },
-                                    { $inc: { "stocks.$.quantity": 1 } },
+                                    {
+                                        $inc: { "stocks.$.quantity": qty },
+                                        $set: { "stocks.$.purchasePrice": purchasePrice }
+                                    },
                                     { new: true }
                                 );
 
@@ -49,8 +54,8 @@ export const startConsumer = async () => {
                                             $push: {
                                                 stocks: {
                                                     symbol: symbolUpper,
-                                                    quantity: 1,
-                                                    purchasePrice: 0
+                                                    quantity: qty,
+                                                    purchasePrice: purchasePrice
                                                 }
                                             }
                                         },
@@ -63,13 +68,13 @@ export const startConsumer = async () => {
                                             userId: finalUserId.toString(),
                                             stocks: [{
                                                 symbol: symbolUpper,
-                                                quantity: 1,
-                                                purchasePrice: 0
+                                                quantity: qty,
+                                                purchasePrice: purchasePrice
                                             }]
                                         });
                                     }
                                 }
-                                console.log(` [v] Portfolio updated for user ${finalUserId}: ${symbolUpper}`);
+                                console.log(` [v] Portfolio updated for user ${finalUserId}: ${symbolUpper} (Qty: ${qty}, Price: ${purchasePrice})`);
                             }
                         }
 
