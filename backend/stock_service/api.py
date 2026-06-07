@@ -6,6 +6,13 @@ import os
 import time
 import logging
 from rapidfuzz import process, fuzz
+from .indicators import (
+    calculate_rsi,
+    calculate_macd,
+    calculate_ema,
+    calculate_bollinger_bands,
+    get_prediction_verdict
+)
 
 # Configure logger
 logging.basicConfig(level=logging.INFO)
@@ -218,13 +225,40 @@ def get_stock_candles():
         # Convert index (Dates) to unix timestamps in seconds
         timestamps = [int(t.timestamp()) for t in hist.index]
         
+        # Extract closing prices
+        close_prices = hist['Close'].tolist()
+        
+        # Calculate technical indicators
+        rsi_list = calculate_rsi(close_prices)
+        macd_list, signal_list, hist_list = calculate_macd(close_prices)
+        ema20_list = calculate_ema(close_prices, 20)
+        ema50_list = calculate_ema(close_prices, 50)
+        bb_upper_list, bb_middle_list, bb_lower_list = calculate_bollinger_bands(close_prices)
+        
+        # Generate prediction verdict
+        analysis = get_prediction_verdict(
+            rsi_list, macd_list, signal_list, hist_list,
+            ema20_list, ema50_list, bb_upper_list, bb_lower_list,
+            close_prices
+        )
+        
         data = {
             't': timestamps,
             'o': hist['Open'].tolist(),
             'h': hist['High'].tolist(),
             'l': hist['Low'].tolist(),
-            'c': hist['Close'].tolist(),
+            'c': close_prices,
             'v': hist['Volume'].tolist(),
+            'rsi': rsi_list,
+            'macd': macd_list,
+            'signal': signal_list,
+            'histogram': hist_list,
+            'ema20': ema20_list,
+            'ema50': ema50_list,
+            'bb_upper': bb_upper_list,
+            'bb_middle': bb_middle_list,
+            'bb_lower': bb_lower_list,
+            'analysis': analysis,
             's': 'ok'
         }
         

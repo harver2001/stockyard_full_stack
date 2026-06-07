@@ -89,3 +89,15 @@ export const fetchPortfolio = async (token) => {
     });
     return response.json();
 };
+
+export const updatePortfolio = async (token, stocks) => {
+    const response = await fetch(`${API_BASE_PORTFOLIO}/api/edit-portfolio-stock`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ stocks }),
+    });
+    return response.json();
+};

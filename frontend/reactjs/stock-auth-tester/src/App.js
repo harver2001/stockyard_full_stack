@@ -170,6 +170,7 @@ function App() {
         timestamp: new Date().toISOString()
       }, token);
 
+
       if (data.error) {
         setAuthResponse({ error: data.error });
       } else {

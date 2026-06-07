@@ -3,11 +3,14 @@ from flask_limiter import Limiter
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file before any other imports
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(dotenv_path=env_path)
+
 from .models import db, migrate
 from .api import auth_bp, limiter
-
-# Load environment variables from .env file
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))
 
 app = Flask(__name__)
 CORS(app, origins=["*"], supports_credentials=True)

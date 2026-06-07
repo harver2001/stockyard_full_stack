@@ -37,4 +37,31 @@ router.get('/portfolio', jwtTokenValidationMiddleware, async (req, res) => {
         res.status(400).json({ message: err.message });
     }
 })
+
+router.put('/edit-portfolio-stock', jwtTokenValidationMiddleware, async (req, res) => {
+    try {
+        const stocks = req.body.stocks;
+        const userId = req.user.user_id || req.user.sub || req.user.id;
+
+        if (!stocks || !Array.isArray(stocks)) {
+            return res.status(400).json({ message: 'Valid stocks array is required' });
+        }
+
+        const updatedPortfolio = await Portfolio.findOneAndUpdate(
+            { userId: userId },
+            { stocks: stocks },
+            { new: true, upsert: true }
+        );
+
+        res.status(200).json({
+            message: 'Portfolio updated successfully',
+            stocks: updatedPortfolio.stocks
+        });
+    } catch (err) {
+        console.error('Error updating portfolio:', err);
+        res.status(500).json({ message: 'Internal server error', error: err.message });
+    }
+})
+
+
 export default router;

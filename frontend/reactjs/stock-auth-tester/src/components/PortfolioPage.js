@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Button, CircularProgress } from '@mui/material';
+import { Container, Typography, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Button, CircularProgress, TextField, Alert, Snackbar } from '@mui/material';
 import { Delete, Folder, ArrowBack } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
-import { fetchPortfolio } from '../services/api';
+import { fetchPortfolio, updatePortfolio } from '../services/api';
 
 const PortfolioPage = ({ token }) => {
     const [portfolio, setPortfolio] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [updating, setUpdating] = useState(false);
+    const [message, setMessage] = useState({ text: '', type: 'success', open: false });
 
     useEffect(() => {
         const getPortfolio = async () => {
@@ -25,6 +27,41 @@ const PortfolioPage = ({ token }) => {
         };
         getPortfolio();
     }, [token]);
+
+    const handleQuantityChange = (id, newQuantity) => {
+        const qty = parseInt(newQuantity) || 0;
+        setPortfolio(prevPortfolio =>
+            prevPortfolio.map(item =>
+                item._id === id ? { ...item, quantity: qty } : item
+            )
+        );
+    };
+
+    const handleUpdatePortfolio = async () => {
+        setUpdating(true);
+        try {
+            const response = await updatePortfolio(token, portfolio);
+            if (response.stocks) {
+                setPortfolio(response.stocks);
+                setMessage({ text: 'Portfolio updated successfully!', type: 'success', open: true });
+            } else {
+                setMessage({ text: 'Failed to update portfolio.', type: 'error', open: true });
+            }
+        } catch (error) {
+            console.error("Error updating portfolio:", error);
+            setMessage({ text: 'An error occurred while updating.', type: 'error', open: true });
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleDeleteStock = (id) => {
+        setPortfolio(prevPortfolio => prevPortfolio.filter(item => item._id !== id));
+    };
+
+    const handleCloseSnackbar = () => {
+        setMessage({ ...message, open: false });
+    };
 
     return (
         <Container maxWidth="lg" sx={{ mt: 8, pb: 8 }}>
@@ -108,7 +145,28 @@ const PortfolioPage = ({ token }) => {
                                                 {item.symbol}
                                             </Typography>
                                         </TableCell>
-                                        <TableCell align="right">{item.quantity}</TableCell>
+                                        <TableCell align="right">
+                                            <TextField
+                                                type="number"
+                                                size="small"
+                                                value={item.quantity}
+                                                onChange={(e) => handleQuantityChange(item._id, e.target.value)}
+                                                sx={{
+                                                    width: '80px',
+                                                    '& .MuiInputBase-input': {
+                                                        textAlign: 'right',
+                                                        color: 'text.primary',
+                                                        fontWeight: 600
+                                                    },
+                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                        borderColor: 'rgba(255,255,255,0.1)'
+                                                    },
+                                                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                        borderColor: 'primary.main'
+                                                    }
+                                                }}
+                                            />
+                                        </TableCell>
                                         <TableCell align="right">${(item.purchasePrice || 0).toLocaleString()}</TableCell>
                                         <TableCell align="right" sx={{ fontWeight: 600 }}>
                                             ${(item.quantity * (item.purchasePrice || 0)).toLocaleString()}
@@ -117,6 +175,7 @@ const PortfolioPage = ({ token }) => {
                                             <IconButton
                                                 color="error"
                                                 size="small"
+                                                onClick={() => handleDeleteStock(item._id)}
                                                 sx={{
                                                     backgroundColor: 'rgba(239, 68, 68, 0.1)',
                                                     '&:hover': { backgroundColor: 'rgba(239, 68, 68, 0.2)' }
@@ -130,6 +189,36 @@ const PortfolioPage = ({ token }) => {
                             </TableBody>
                         </Table>
                     </TableContainer>
+
+                    <Button
+                        onClick={handleUpdatePortfolio}
+                        disabled={updating}
+                        sx={{
+                            marginTop: "2rem",
+                            padding: "0.8em 2em",
+                            background: "linear-gradient(90deg, #6366f1, #8b5cf6)",
+                            color: "white",
+                            fontWeight: 700,
+                            borderRadius: '10px',
+                            boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)',
+                            '&:hover': {
+                                background: "linear-gradient(90deg, #4f46e5, #7c3aed)",
+                                boxShadow: '0 6px 20px rgba(99, 102, 241, 0.4)',
+                            },
+                            '&:disabled': {
+                                background: 'rgba(255,255,255,0.1)',
+                                color: 'rgba(255,255,255,0.3)'
+                            }
+                        }}
+                    >
+                        {updating ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Update Portfolio'}
+                    </Button>
+
+                    <Snackbar open={message.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+                        <Alert onClose={handleCloseSnackbar} severity={message.type} sx={{ width: '100%' }}>
+                            {message.text}
+                        </Alert>
+                    </Snackbar>
 
                     {portfolio.length === 0 && (
                         <Box sx={{ textAlign: 'center', py: 10 }}>
