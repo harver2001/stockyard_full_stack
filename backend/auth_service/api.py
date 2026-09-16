@@ -8,8 +8,12 @@ from psycopg_pool import ConnectionPool
 from psycopg.rows import dict_row
 
 # Database connection pool setup
-db_uri = os.environ.get('SQLALCHEMY_DATABASE_URI')
-pool = ConnectionPool(conninfo=db_uri)
+db_uri = os.environ.get('SQLALCHEMY_DATABASE_URI', 'postgresql://postgres:postgres@pgdb:5432/stock_db')
+if db_uri and 'postgresql+psycopg://' in db_uri:
+    conninfo = db_uri.replace('postgresql+psycopg://', 'postgresql://', 1)
+else:
+    conninfo = db_uri
+pool = ConnectionPool(conninfo=conninfo)
 
 redis_host = os.environ.get('REDIS_HOST', 'localhost')
 redis_port = os.environ.get('REDIS_PORT', 6379)
