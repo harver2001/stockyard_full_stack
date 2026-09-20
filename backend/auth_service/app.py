@@ -14,7 +14,11 @@ from .api import auth_bp, limiter
 
 app = Flask(__name__)
 CORS(app, origins=["*"], supports_credentials=True)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///auth.db')
+raw_db_uri = os.environ.get('SQLALCHEMY_DATABASE_URI', 'postgresql://postgres:postgres@pgdb:5432/stock_db')
+if raw_db_uri.startswith('postgresql://'):
+    app.config['SQLALCHEMY_DATABASE_URI'] = raw_db_uri.replace('postgresql://', 'postgresql+psycopg://', 1)
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = raw_db_uri
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'secret-key')
 db.init_app(app)
 migrate.init_app(app, db)
