@@ -79,6 +79,108 @@ def get_quote(symbol):
         return jsonify({'error': f'Failed to fetch quote: {str(e)}'}), 500
 
 
+@stock_bp.route('/batch-quotes', methods=['GET'])
+def get_batch_quotes():
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({'error': 'Missing or invalid token'}), 401
+
+    token = auth_header.split(' ')[1]
+    token_payload = verify_token(token)
+    if not token_payload:
+        return jsonify({'error': 'Invalid or expired token'}), 401
+
+    symbols_param = request.args.get('symbols', '')
+    if not symbols_param:
+        return jsonify({}), 200
+
+    symbols = [s.strip().upper() for s in symbols_param.split(',') if s.strip()]
+    if not symbols:
+        return jsonify({}), 200
+
+    r = redis_client.get_client()
+    results = {}
+
+    for symbol in symbols:
+        cached = None
+        if r:
+            try:
+                cached_str = r.get(f"quote:{symbol}")
+                if cached_str:
+                    cached = json.loads(cached_str)
+            except Exception as e:
+                logger.error(f"Redis get error for {symbol}: {e}")
+
+        if cached:
+            results[symbol] = cached
+            continue
+
+        quote_data = None
+        # Try Finnhub first
+        try:
+            quote = finnhub_client.quote(symbol)
+            if quote and (quote.get('c', 0) > 0 or quote.get('pc', 0) > 0):
+                quote_data = {
+                    'symbol': symbol,
+                    'current_price': quote.get('c', 0),
+                    'change': quote.get('d', 0),
+                    'percent_change': quote.get('dp', 0),
+                    'high': quote.get('h', 0),
+                    'low': quote.get('l', 0),
+                    'open': quote.get('o', 0),
+                    'previous_close': quote.get('pc', 0)
+                }
+        except Exception as e:
+            logger.warning(f"Finnhub batch quote failed for {symbol}: {e}")
+
+        # Fallback to yfinance if finnhub returned 0 or failed
+        if not quote_data or quote_data.get('current_price', 0) == 0:
+            try:
+                ticker = yf.Ticker(symbol)
+                fast_info = getattr(ticker, 'fast_info', None)
+                if fast_info:
+                    current = getattr(fast_info, 'last_price', None)
+                    prev = getattr(fast_info, 'previous_close', None)
+                    if current:
+                        change = (current - prev) if prev else 0
+                        pct = (change / prev * 100) if prev else 0
+                        quote_data = {
+                            'symbol': symbol,
+                            'current_price': round(float(current), 2),
+                            'change': round(float(change), 2),
+                            'percent_change': round(float(pct), 2),
+                            'high': round(float(getattr(fast_info, 'day_high', current)), 2),
+                            'low': round(float(getattr(fast_info, 'day_low', current)), 2),
+                            'open': round(float(getattr(fast_info, 'open', current)), 2),
+                            'previous_close': round(float(prev if prev else current), 2)
+                        }
+            except Exception as e:
+                logger.warning(f"yfinance batch quote fallback failed for {symbol}: {e}")
+
+        if not quote_data:
+            quote_data = {
+                'symbol': symbol,
+                'current_price': 0,
+                'change': 0,
+                'percent_change': 0,
+                'high': 0,
+                'low': 0,
+                'open': 0,
+                'previous_close': 0
+            }
+
+        # Cache in Redis for 60s
+        if r and quote_data.get('current_price', 0) > 0:
+            try:
+                r.setex(f"quote:{symbol}", 60, json.dumps(quote_data))
+            except Exception as e:
+                logger.error(f"Redis set error for {symbol}: {e}")
+
+        results[symbol] = quote_data
+
+    return jsonify(results), 200
+
+
 @stock_bp.route('/company/<symbol>', methods=['GET'])
 def get_company(symbol):
     logger.info(f"Fetching company profile for symbol: {symbol}")
