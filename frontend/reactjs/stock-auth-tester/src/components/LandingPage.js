@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, BarChart2, Shield, Zap, ArrowRight, Github } from 'lucide-react';
+import { TrendingUp, BarChart2, Shield, Zap, ArrowRight } from 'lucide-react';
 import { Box, Container, Typography, Button, Grid, Card, CardContent } from '@mui/material';
 
 const LandingPage = ({ onLoginOpen, onRegisterOpen }) => {
