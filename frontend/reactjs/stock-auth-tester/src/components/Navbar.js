@@ -1,6 +1,6 @@
 import React from 'react';
 import { AppBar, Toolbar, Typography, Button, IconButton, Box, Container } from '@mui/material';
-import { Login, PersonAdd, Brightness4, Brightness7, Logout, AccountBalance, TrendingUp } from '@mui/icons-material';
+import { Brightness4, Brightness7, Logout, AccountBalance, TrendingUp } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion'
 
@@ -8,6 +8,7 @@ const Navbar = ({ onRegisterOpen, onLoginOpen, darkMode, onToggleDarkMode, token
     return (
         <AppBar
             position="sticky"
+            
             elevation={0}
             sx={{
                 background: 'rgba(15, 23, 42, 0.8)',
