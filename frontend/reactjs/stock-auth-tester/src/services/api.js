@@ -68,6 +68,18 @@ export const fetchStockCandles = async (symbol, period = '1y', interval = '1d', 
     return response.json();
 };
 
+export const fetchBatchStockQuotes = async (symbols, token) => {
+    if (!symbols || (Array.isArray(symbols) && symbols.length === 0)) return {};
+    const symbolsParam = Array.isArray(symbols) ? symbols.join(',') : symbols;
+    const response = await fetch(`${API_BASE_STOCK}/api/v1/stock/batch-quotes?symbols=${encodeURIComponent(symbolsParam)}`, {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    return response.json();
+};
+
 export const addToPortfolio = async (stockData, token) => {
     const response = await fetch(`${API_BASE_STOCK}/api/v1/stock/add-stock`, {
         method: 'POST',
